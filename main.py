@@ -30,6 +30,9 @@ RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "DinoRun1.png")),
 
 JUMPING = pygame.image.load(os.path.join("Assets/Dino", "DinoJump.png"))
 
+CRAWLING = [pygame.image.load(os.path.join("Assets/Dino", "DinoCrawl1.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "DinoCrawl2.png"))]
+
 SMALL_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus1.png")),
            pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus2.png")),
            pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus3.png"))]
@@ -37,6 +40,9 @@ SMALL_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus1.pn
 LARGE_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus1.png")),
            pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus2.png")),
            pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus3.png"))]
+
+PTERODACTYL = [pygame.image.load(os.path.join("Assets/Pterodactyl", "Pterodactyl1.png")),
+           pygame.image.load(os.path.join("Assets/Pterodactyl", "Pterodactyl2.png"))]
 
 BACKGROUND = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
@@ -270,7 +276,8 @@ def eval_genomes(genomes, config):
         if len(dinosaurs) == 0: # if no dinosaurs
             break
 
-        if len(obstacles) == 0:
+        if len(obstacles) == 0: # if there's no obstacle
+            # create either a small cactus, large cactus or a pterodactyl
             rand_int = random.randint(0,1)
             if rand_int ==  0:
                 obstacles.append(SmallCactus(SMALL_CACTUS, random.randint(0, 2)))

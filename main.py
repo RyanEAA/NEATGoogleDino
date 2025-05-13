@@ -8,6 +8,14 @@ import matplotlib.pyplot as plt
 from neat.reporting import BaseReporter
 import matplotlib.animation as animation
 
+import visualize
+import pickle
+import io
+from PIL import Image
+import tkinter as tk
+from PIL import ImageTk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 # initialize pygame
 pygame.init()
 
@@ -33,21 +41,29 @@ LARGE_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus1.pn
 BACKGROUND = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
-
 FONT = pygame.font.Font("freesansbold.ttf", 20)
 
-fitness_history = []
 class LivePlotReporter(BaseReporter):
-    def __init__(self):
+    def __init__(self, config):
+
         self.fig, self.ax = plt.subplots()
+
+
+        self.fig2, self.ax2 = plt.subplots()
+
+        self.fig2.canvas.manager.set_window_title(f"Best Genome")
+
+        # keep track of generations
         self.gen = []
         self.max_fitness = []
         self.avg_fitness = []
         self.min_fitness = []
 
+        # sets up the plot
         self.max_line, = self.ax.plot([], [], 'g-', label='Max Fitness')
         self.avg_line, = self.ax.plot([], [], 'b--', label='Avg Fitness')
         self.min_line, = self.ax.plot([], [], 'r-', label='Min Fitness')
+
 
         self.ax.set_xlim(0, 1)
         self.ax.set_ylim(0, 10)
@@ -61,6 +77,7 @@ class LivePlotReporter(BaseReporter):
     def post_evaluate(self, config, population, species, best_genome):
         generation = len(self.gen)
 
+        # computes fitness stats
         fitnesses = [genome.fitness for genome in population.values()]
         min_fit = min(fitnesses)
         avg_fit = sum(fitnesses) / len(fitnesses)
@@ -71,6 +88,7 @@ class LivePlotReporter(BaseReporter):
         self.avg_fitness.append(avg_fit)
         self.max_fitness.append(max_fit)
 
+        # updating fitness plot
         self.max_line.set_data(self.gen, self.max_fitness)
         self.avg_line.set_data(self.gen, self.avg_fitness)
         self.min_line.set_data(self.gen, self.min_fitness)
@@ -83,6 +101,15 @@ class LivePlotReporter(BaseReporter):
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+
+        # Show best genome
+        dot = visualize.draw_net(config, best_genome, view=False, show_disabled=True, prune_unused=False)
+        png_data = dot.pipe(format='png')
+        image = Image.open(io.BytesIO(png_data))
+
+        self.ax2.imshow(image)
+        self.ax2.axis('off')
+
 
 
 
@@ -103,7 +130,7 @@ class Dinosaur:
         self.color = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
 
 
-    def update(self):
+    def update(self): # handle animation place
         if self.dino_run:
             self.run()
         if self.dino_jump:
@@ -111,12 +138,12 @@ class Dinosaur:
         if self.step_index >= 10:
             self.step_index = 0
 
-    def jump(self):
+    def jump(self): 
         self.image = JUMPING # updates image to jumping image
         if self.dino_jump: # if dino jumps
             self.rect.y -=  self.jump_vel * 4
             self.jump_vel -= 0.8
-        if self.jump_vel <= -self.JUMP_VEL: 
+        if self.jump_vel <= -self.JUMP_VEL:  
             self.dino_jump = False
             self.dino_run = True
             self.jump_vel = self.JUMP_VEL
@@ -265,9 +292,15 @@ def eval_genomes(genomes, config):
         
         # user_input = pygame.key.get_pressed()
 
+
         for i, dinosaur in enumerate(dinosaurs):
+            # normalized game speed
+
             output = nets[i].activate((dinosaur.rect.y,
-                                       distance((dinosaur.rect.x, dinosaur.rect.y), obstacle.rect.midtop)
+                                       distance((dinosaur.rect.x, dinosaur.rect.y), obstacle.rect.midtop),
+                                       obstacle.rect.width,
+                                       obstacle.rect.height,
+                                       game_speed
                                        ))
             
             if output[0] > 0.5 and dinosaur.rect.y == dinosaur.Y_POS:   
@@ -297,17 +330,16 @@ def run(config_path):
     stats = neat.StatisticsReporter()
     pop.add_reporter(stats)
 
-    live_plot = LivePlotReporter()
+    live_plot = LivePlotReporter(config)
     pop.add_reporter(live_plot)
 
     # run NEAT for up to 50 generations
     pop.run(eval_genomes, 50)
 
 
-
 # main()
 if __name__ == '__main__': 
-    local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, 'config.txt')
+    
+    config_path = os.path.join("Game", 'config.txt')
     run(config_path)
 

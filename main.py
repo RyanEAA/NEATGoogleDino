@@ -358,7 +358,7 @@ def run(config_path):
     pop.add_reporter(stats)
     live_plot = LivePlotReporter(config)
     pop.add_reporter(live_plot)
-    pop.run(eval_genomes, 50)
+    pop.run(eval_genomes, 100)
 
 if __name__ == '__main__':
     local_dir = os.path.dirname(__file__)
